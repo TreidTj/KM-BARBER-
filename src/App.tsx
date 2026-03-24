@@ -271,6 +271,7 @@ const AuthPage = ({ onGuestLogin }: { onGuestLogin: () => void }) => {
 
 const HomePage = ({ services }: { services: any[] }) => {
   const user = auth.currentUser;
+  const navigate = useNavigate();
 
   const defaultServices = [
     { id: 'def1', name: 'Мӯйсартарошии классикӣ', price: '50 смн', time: '45 дақ', img: 'https://avatars.mds.yandex.net/i?id=cae4b0b393ea9aea6cb8935142e12b8ba3f537dc-5354513-images-thumbs&n=13' },
@@ -289,7 +290,10 @@ const HomePage = ({ services }: { services: any[] }) => {
     >
       {/* Header */}
       <header className="px-6 pt-4 pb-2 flex items-center justify-between shrink-0">
-        <div className="flex items-center gap-3">
+        <div 
+          className="flex items-center gap-3 cursor-pointer" 
+          onClick={() => navigate('/profile')}
+        >
           <div className="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center border border-white/5 overflow-hidden">
             {user?.photoURL ? (
               <img 
@@ -311,9 +315,11 @@ const HomePage = ({ services }: { services: any[] }) => {
         </div>
         <motion.button 
           whileTap={{ scale: 0.9 }}
-          className="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center border border-white/5 neon-btn"
+          onClick={() => navigate('/history')}
+          className="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center border border-white/5 neon-btn relative"
         >
           <Bell size={20} className="text-gray-400" />
+          <div className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border border-gray-800"></div>
         </motion.button>
       </header>
 
@@ -1021,20 +1027,20 @@ function AppContent() {
 
       <AnimatePresence mode="wait">
         <Routes>
-          <Route path="/" element={<HomePage services={services} />} />
+          <Route path="/" element={<ReviewsPage />} />
+          <Route path="/services" element={<HomePage services={services} />} />
           <Route path="/booking" element={<BookingPage isGuest={isGuest} />} />
           <Route path="/history" element={<HistoryPage isAdmin={isAdmin} />} />
-          <Route path="/reviews" element={<ReviewsPage />} />
           <Route path="/profile" element={<ProfilePage onLogout={handleLogout} isAdmin={isAdmin} />} />
           {isAdmin && <Route path="/admin" element={<AdminDashboard services={services} />} />}
         </Routes>
       </AnimatePresence>
 
       <nav className="fixed bottom-6 left-6 right-6 glass rounded-[2.5rem] p-2 flex justify-around items-center z-50 shadow-2xl border-white/10">
-        <NavItem to="/" icon={Home} label="Асосӣ" />
+        <NavItem to="/" icon={Star} label="Шарҳҳо" />
+        <NavItem to="/services" icon={Scissors} label="Хизматҳо" />
         <NavItem to="/booking" icon={Calendar} label="Сабт" />
         <NavItem to="/history" icon={Clock} label="Таърих" />
-        <NavItem to="/reviews" icon={Star} label="Шарҳҳо" />
         <NavItem to="/profile" icon={User} label="Профил" />
       </nav>
     </div>
