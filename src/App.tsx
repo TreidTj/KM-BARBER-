@@ -3,6 +3,7 @@ import { Home, Calendar, Clock, Star, User, MapPin, Bell, ChevronRight, Phone, M
 import React, { useState, useEffect, useRef, ErrorInfo, ReactNode } from 'react';
 import { format, addDays, isSameDay } from 'date-fns';
 import { auth, db } from '@/lib/firebase';
+import { LanguageProvider, useLanguage } from '@/lib/LanguageContext';
 import { 
   signInWithEmailAndPassword, 
   createUserWithEmailAndPassword, 
@@ -75,34 +76,45 @@ class ErrorBoundary extends React.Component<any, any> {
   render() {
     const { hasError, error } = (this as any).state;
     if (hasError) {
-      let message = "Мушкилие ба амал омад.";
-      try {
-        const parsed = JSON.parse(error?.message || "");
-        if (parsed.error && parsed.error.includes("insufficient permissions")) {
-          message = "Шумо барои ин амал ҳуқуқ надоред.";
-        }
-      } catch (e) {
-        // Not a JSON error
-      }
-
       return (
-        <div className="min-h-screen bg-[#0a0a0a] flex flex-col items-center justify-center p-6 text-center">
-          <AlertTriangle size={48} className="text-red-500 mb-4" />
-          <h2 className="text-xl font-black mb-2">Хатогӣ</h2>
-          <p className="text-gray-500 text-sm mb-6">{message}</p>
-          <button 
-            onClick={() => window.location.reload()}
-            className="bg-amber-500 text-black px-6 py-3 rounded-2xl font-bold uppercase text-xs"
-          >
-            Дубора кӯшиш кунед
-          </button>
-        </div>
+        <LanguageContextConsumer>
+          {(t) => {
+            let message = t('errorOccurred');
+            try {
+              const parsed = JSON.parse(error?.message || "");
+              if (parsed.error && parsed.error.includes("insufficient permissions")) {
+                message = t('noPermission');
+              }
+            } catch (e) {
+              // Not a JSON error
+            }
+
+            return (
+              <div className="min-h-screen bg-[#0a0a0a] flex flex-col items-center justify-center p-6 text-center">
+                <AlertTriangle size={48} className="text-red-500 mb-4" />
+                <h2 className="text-xl font-black mb-2">{t('error')}</h2>
+                <p className="text-gray-500 text-sm mb-6">{message}</p>
+                <button 
+                  onClick={() => window.location.reload()}
+                  className="bg-amber-500 text-black px-6 py-3 rounded-2xl font-bold uppercase text-xs"
+                >
+                  {t('tryAgain')}
+                </button>
+              </div>
+            );
+          }}
+        </LanguageContextConsumer>
       );
     }
 
     return (this as any).props.children;
   }
 }
+
+const LanguageContextConsumer = ({ children }: { children: (t: (key: string) => string) => React.ReactNode }) => {
+  const { t } = useLanguage();
+  return <>{children(t as any)}</>;
+};
 
 // Test Connection
 async function testConnection() {
@@ -139,6 +151,7 @@ const NavItem = ({ to, icon: Icon, label }: { to: string; icon: any; label: stri
 };
 
 const AuthPage = ({ onGuestLogin }: { onGuestLogin: () => void }) => {
+  const { t } = useLanguage();
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -151,7 +164,7 @@ const AuthPage = ({ onGuestLogin }: { onGuestLogin: () => void }) => {
     setErrorMsg(null);
     
     if (password.length < 6) {
-      setErrorMsg('Рамз бояд камаш 6 аломат бошад');
+      setErrorMsg(t('passwordMinLength'));
       return;
     }
     setLoading(true);
@@ -160,16 +173,16 @@ const AuthPage = ({ onGuestLogin }: { onGuestLogin: () => void }) => {
         await signInWithEmailAndPassword(auth, email, password);
       } else {
         await createUserWithEmailAndPassword(auth, email, password);
-        alert('Ҳисоб бомуваффақият эҷод шуд!');
+        alert(t('accountCreated'));
       }
     } catch (error: any) {
       let msg = error.message;
       if (msg.includes('auth/invalid-credential')) {
-        msg = 'Почта ё рамз нодуруст аст. Лутфан дубора санҷед.';
+        msg = t('invalidCreds');
       } else if (msg.includes('auth/email-already-in-use')) {
-        msg = 'Ин почта аллакай бақайд гирифта шудааст.';
+        msg = t('emailInUse');
       } else if (msg.includes('auth/weak-password')) {
-        msg = 'Рамз бояд камаш 6 аломат бошад.';
+        msg = t('passwordMinLength');
       }
       setErrorMsg(msg);
     } finally {
@@ -188,8 +201,8 @@ const AuthPage = ({ onGuestLogin }: { onGuestLogin: () => void }) => {
           <div className="w-20 h-20 bg-amber-500 rounded-3xl mx-auto flex items-center justify-center shadow-lg shadow-amber-500/20 mb-6">
             <Scissors size={40} className="text-black" />
           </div>
-          <h2 className="text-3xl font-black">{isLogin ? 'Хуш омадед' : 'Бақайдгирӣ'}</h2>
-          <p className="text-gray-500 text-sm">{isLogin ? 'Барои идома додан ворид шавед' : 'Ҳисоби нав эҷод кунед'}</p>
+          <h2 className="text-3xl font-black">{isLogin ? t('welcome') : t('register')}</h2>
+          <p className="text-gray-500 text-sm">{isLogin ? t('loginToContinue') : t('createNewAccount')}</p>
         </div>
 
         {errorMsg && (
@@ -207,7 +220,7 @@ const AuthPage = ({ onGuestLogin }: { onGuestLogin: () => void }) => {
             <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
             <input 
               type="email" 
-              placeholder="Почтаи электронӣ"
+              placeholder={t('email')}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="w-full bg-gray-900 border border-white/5 rounded-2xl py-4 pl-12 pr-4 text-sm focus:outline-none focus:border-amber-500/50 transition-all"
@@ -218,7 +231,7 @@ const AuthPage = ({ onGuestLogin }: { onGuestLogin: () => void }) => {
             <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
             <input 
               type={showPassword ? "text" : "password"} 
-              placeholder="Рамз"
+              placeholder={t('password')}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="w-full bg-gray-900 border border-white/5 rounded-2xl py-4 pl-12 pr-4 text-sm focus:outline-none focus:border-amber-500/50 transition-all"
@@ -229,9 +242,9 @@ const AuthPage = ({ onGuestLogin }: { onGuestLogin: () => void }) => {
               onClick={() => setShowPassword(!showPassword)}
               className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 text-[10px] font-bold uppercase"
             >
-              {showPassword ? 'Пӯшидан' : 'Нишон'}
+              {showPassword ? t('hide') : t('show')}
             </button>
-            {!isLogin && <p className="text-[10px] text-gray-600 mt-1 ml-2">Камаш 6 аломат</p>}
+            {!isLogin && <p className="text-[10px] text-gray-600 mt-1 ml-2">{t('passwordMinLength')}</p>}
           </div>
           <motion.button 
             type="submit"
@@ -240,8 +253,8 @@ const AuthPage = ({ onGuestLogin }: { onGuestLogin: () => void }) => {
             disabled={loading}
             className="w-full bg-amber-500 text-black py-4 rounded-2xl font-black uppercase tracking-widest flex items-center justify-center gap-2 disabled:opacity-50 neon-btn"
           >
-            {loading ? 'Боргирӣ...' : (isLogin ? <LogIn size={18} /> : <UserPlus size={18} />)}
-            {loading ? '' : (isLogin ? 'Ворид шудан' : 'Бақайдгирӣ')}
+            {loading ? t('loading') : (isLogin ? <LogIn size={18} /> : <UserPlus size={18} />)}
+            {loading ? '' : (isLogin ? t('login') : t('register'))}
           </motion.button>
         </form>
 
@@ -251,7 +264,7 @@ const AuthPage = ({ onGuestLogin }: { onGuestLogin: () => void }) => {
             whileTap={{ scale: 0.95 }}
             className="text-amber-500 text-xs font-bold uppercase tracking-widest"
           >
-            {isLogin ? 'Ҳисоб надоред? Бақайдгирӣ' : 'Ҳисоб доред? Ворид шудан'}
+            {isLogin ? t('noAccount') : t('hasAccount')}
           </motion.button>
           
           <div className="pt-4 border-t border-white/5">
@@ -260,7 +273,7 @@ const AuthPage = ({ onGuestLogin }: { onGuestLogin: () => void }) => {
               whileTap={{ scale: 0.95 }}
               className="text-gray-500 text-[10px] font-bold uppercase tracking-widest hover:text-amber-500 transition-colors"
             >
-              Ҳамчун меҳмон ворид шудан (Guest Mode)
+              {t('continueAsGuest')}
             </motion.button>
           </div>
         </div>
@@ -270,13 +283,14 @@ const AuthPage = ({ onGuestLogin }: { onGuestLogin: () => void }) => {
 };
 
 const HomePage = ({ services }: { services: any[] }) => {
+  const { t } = useLanguage();
   const user = auth.currentUser;
   const navigate = useNavigate();
 
   const defaultServices = [
-    { id: 'def1', name: 'Мӯйсартарошии классикӣ', price: '50 смн', time: '45 дақ', img: 'https://avatars.mds.yandex.net/i?id=cae4b0b393ea9aea6cb8935142e12b8ba3f537dc-5354513-images-thumbs&n=13' },
-    { id: 'def2', name: 'Ороиши риш', price: '15 смн', time: '30 дақ', img: 'https://avatars.mds.yandex.net/i?id=fe33fcdaec438db37dd053f216a42e5db8512e88-5578930-images-thumbs&n=13' },
-    { id: 'def3', name: 'Поккории люкс', price: '25 смн', time: '60 дақ', img: 'https://avatars.mds.yandex.net/i?id=8ef5cc6e0493c0cc51c6ecca2412c41ff2e13c41-12603899-images-thumbs&n=13' },
+    { id: 'def1', name: t('classicHaircut'), price: `50 ${t('somoni')}`, time: `45 ${t('min')}`, img: 'https://avatars.mds.yandex.net/i?id=cae4b0b393ea9aea6cb8935142e12b8ba3f537dc-5354513-images-thumbs&n=13' },
+    { id: 'def2', name: t('beardTrim'), price: `15 ${t('somoni')}`, time: `30 ${t('min')}`, img: 'https://avatars.mds.yandex.net/i?id=fe33fcdaec438db37dd053f216a42e5db8512e88-5578930-images-thumbs&n=13' },
+    { id: 'def3', name: t('luxuryGrooming'), price: `25 ${t('somoni')}`, time: `60 ${t('min')}`, img: 'https://avatars.mds.yandex.net/i?id=8ef5cc6e0493c0cc51c6ecca2412c41ff2e13c41-12603899-images-thumbs&n=13' },
   ];
 
   const displayServices = [...defaultServices, ...services];
@@ -307,9 +321,9 @@ const HomePage = ({ services }: { services: any[] }) => {
             )}
           </div>
           <div>
-            <p className="text-xs text-gray-500 font-medium">Хуш омадед</p>
+            <p className="text-xs text-gray-500 font-medium">{t('welcome')}</p>
             <h3 className="text-sm font-black tracking-tight">
-              {user?.email?.split('@')[0] || 'Мизоҷи Мӯҳтарам'}
+              {user?.email?.split('@')[0] || t('guest')}
             </h3>
           </div>
         </div>
@@ -327,7 +341,7 @@ const HomePage = ({ services }: { services: any[] }) => {
       <div className="flex-1 flex flex-col justify-center px-6 py-4">
         <div className="max-w-5xl mx-auto w-full">
           <div className="text-center mb-8 md:mb-12">
-            <h4 className="font-black text-2xl md:text-4xl tracking-tighter">Хизматрасониҳои мо</h4>
+            <h4 className="font-black text-2xl md:text-4xl tracking-tighter">{t('services')}</h4>
             <div className="w-12 h-1 bg-amber-500 mx-auto mt-2 rounded-full" />
           </div>
           
@@ -362,7 +376,7 @@ const HomePage = ({ services }: { services: any[] }) => {
                       className="w-full bg-amber-500 text-black py-4 rounded-2xl text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2 shadow-lg shadow-amber-500/20 neon-btn"
                     >
                       <Calendar size={16} />
-                      САБТ
+                      {t('booking')}
                     </motion.button>
                   </Link>
                 </div>
@@ -376,6 +390,7 @@ const HomePage = ({ services }: { services: any[] }) => {
 };
 
 const BookingPage = ({ isGuest }: { isGuest: boolean }) => {
+  const { t } = useLanguage();
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
   const [bookedSlots, setBookedSlots] = useState<string[]>([]);
@@ -406,13 +421,13 @@ const BookingPage = ({ isGuest }: { isGuest: boolean }) => {
 
   const handleBooking = async () => {
     if (!selectedTime) {
-      alert('Лутфан вақтро интихоб кунед');
+      alert(t('selectTime'));
       return;
     }
 
     const user = auth.currentUser;
     if (!user && !isGuest) {
-      alert('Лутфан барои сабт ворид шавед');
+      alert(t('loginToContinue'));
       return;
     }
 
@@ -422,11 +437,11 @@ const BookingPage = ({ isGuest }: { isGuest: boolean }) => {
         user_id: user?.uid || 'guest',
         date: format(selectedDate, 'yyyy-MM-dd'),
         time: `${selectedTime}:00`,
-        service: 'Мӯйсартарошӣ',
+        service: t('haircut'),
         status: 'confirmed',
         createdAt: serverTimestamp()
       });
-      alert('Бомуваффақият сабт шуд!');
+      alert(t('bookingSuccess'));
       navigate('/history');
     } catch (error) {
       handleFirestoreError(error, OperationType.WRITE, 'appointments');
@@ -444,7 +459,7 @@ const BookingPage = ({ isGuest }: { isGuest: boolean }) => {
       <div className="px-6 pt-12 relative z-10">
         <div className="glass rounded-[2.5rem] p-6 mb-6">
           <div className="space-y-4">
-            <h3 className="font-black text-lg">Интихоби сана</h3>
+            <h3 className="font-black text-lg">{t('selectDate')}</h3>
             <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
               {Array.from({ length: 14 }).map((_, i) => {
                 const date = addDays(new Date(), i);
@@ -465,7 +480,7 @@ const BookingPage = ({ isGuest }: { isGuest: boolean }) => {
           </div>
 
           <div className="mt-6 space-y-4">
-            <h3 className="font-black text-lg">Вақтҳои холӣ</h3>
+            <h3 className="font-black text-lg">{t('selectTime')}</h3>
             <div className="grid grid-cols-3 gap-3">
               {timeSlots.map(time => {
                 const isBooked = bookedSlots.includes(time);
@@ -493,7 +508,7 @@ const BookingPage = ({ isGuest }: { isGuest: boolean }) => {
           disabled={loading}
           className="w-full bg-amber-500 text-black py-5 rounded-3xl font-black uppercase tracking-widest shadow-xl shadow-amber-500/20 disabled:opacity-50 neon-btn"
         >
-          {loading ? 'Боргирӣ...' : 'Тасдиқи сабт'}
+          {loading ? t('loading') : t('confirm')}
         </motion.button>
       </div>
     </motion.div>
@@ -501,6 +516,7 @@ const BookingPage = ({ isGuest }: { isGuest: boolean }) => {
 };
 
 const HistoryPage = ({ isAdmin }: { isAdmin: boolean }) => {
+  const { t } = useLanguage();
   const [appointments, setAppointments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -541,15 +557,15 @@ const HistoryPage = ({ isAdmin }: { isAdmin: boolean }) => {
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="p-6 pb-32">
-      <h2 className="text-2xl font-black mb-6">{isAdmin ? 'Ҳамаи сабтҳо' : 'Таърихи ташрифҳо'}</h2>
+      <h2 className="text-2xl font-black mb-6">{isAdmin ? t('bookingHistory') : t('history')}</h2>
       {loading ? (
-        <p className="text-gray-500">Боргирӣ...</p>
+        <p className="text-gray-500">{t('loading')}</p>
       ) : appointments.length > 0 ? (
         <div className="space-y-4">
           {appointments.map(app => (
             <div key={app.id} className="glass rounded-2xl p-4 border-white/5 relative">
               <div className="flex justify-between items-start mb-2">
-                <h4 className="font-bold">Мӯйсартарошӣ</h4>
+                <h4 className="font-bold">{app.service || t('haircut')}</h4>
                 <div className="flex items-center gap-2">
                   {isAdmin && (
                     <button 
@@ -560,7 +576,7 @@ const HistoryPage = ({ isAdmin }: { isAdmin: boolean }) => {
                     </button>
                   )}
                   <span className={`text-[10px] px-2 py-1 rounded-lg uppercase ${app.status === 'completed' ? 'bg-green-500/10 text-green-500' : 'bg-gray-800 text-gray-400'}`}>
-                    {app.status === 'completed' ? 'Иҷро шуд' : 'Тасдиқ шуд'}
+                    {app.status === 'completed' ? t('completed') : t('confirmed')}
                   </span>
                 </div>
               </div>
@@ -575,17 +591,18 @@ const HistoryPage = ({ isAdmin }: { isAdmin: boolean }) => {
           ))}
         </div>
       ) : (
-        <p className="text-gray-500">Шумо то ҳол сабт надоред.</p>
+        <p className="text-gray-500">{t('noBookings')}</p>
       )}
     </motion.div>
   );
 };
 
 const ReviewsPage = () => {
+  const { t } = useLanguage();
   const reviews = [
-    { id: 1, user: 'Фирдавс', rating: 5, comment: 'Беҳтарин барбер дар шаҳр!', date: '2 рӯз пеш' },
-    { id: 2, user: 'Суҳроб', rating: 4, comment: 'Хизматрасонӣ хуб аст, тавсия медиҳам.', date: '1 ҳафта пеш' },
-    { id: 3, user: 'Алишер', rating: 5, comment: 'Дасти Муҳаммад тилло аст!', date: '3 рӯз пеш' },
+    { id: 1, user: 'Фирдавс', rating: 5, comment: t('bestBarber'), date: `2 ${t('daysAgo')}` },
+    { id: 2, user: 'Суҳроб', rating: 4, comment: t('goodService'), date: `1 ${t('weeksAgo')}` },
+    { id: 3, user: 'Алишер', rating: 5, comment: t('goldenHands'), date: `3 ${t('daysAgo')}` },
   ];
 
   return (
@@ -607,7 +624,7 @@ const ReviewsPage = () => {
             transition={{ delay: 0.2 }}
           >
             <div className="flex items-center justify-center gap-2 mb-1">
-              <h2 className="text-xl font-black tracking-tight">Муҳаммад</h2>
+              <h2 className="text-xl font-black tracking-tight">Muhammad</h2>
               <motion.a 
                 href="https://t.me/km_agammed_005"
                 target="_blank"
@@ -627,7 +644,7 @@ const ReviewsPage = () => {
                 <span className="text-white">4.7</span>
               </div>
               <div className="w-1 h-1 bg-gray-700 rounded-full" />
-              <div>128 Мизоҷон</div>
+              <div>128 {t('clients')}</div>
               <div className="w-1 h-1 bg-gray-700 rounded-full" />
               <div className="text-amber-500">Pro Barber</div>
             </div>
@@ -637,7 +654,7 @@ const ReviewsPage = () => {
 
       <div className="px-6">
         <h3 className="text-xl font-black mb-6 flex items-center gap-2">
-          Шарҳҳои мизоҷон
+          {t('reviews')}
           <span className="text-xs bg-white/5 px-2 py-1 rounded-lg text-gray-500">{reviews.length}</span>
         </h3>
         
@@ -676,9 +693,10 @@ const ReviewsPage = () => {
 };
 
 const ProfilePage = ({ onLogout, isAdmin }: { onLogout: () => void; isAdmin: boolean }) => {
+  const { t, language, setLanguage } = useLanguage();
   const user = auth.currentUser;
   const [isEditing, setIsEditing] = useState(false);
-  const [name, setName] = useState(user?.displayName || user?.email?.split('@')[0] || 'Мизоҷи Мӯҳтарам');
+  const [name, setName] = useState(user?.displayName || user?.email?.split('@')[0] || t('guest'));
   const [avatar, setAvatar] = useState(user?.photoURL || "");
   const [loading, setLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -692,9 +710,9 @@ const ProfilePage = ({ onLogout, isAdmin }: { onLogout: () => void; isAdmin: boo
         photoURL: avatar
       });
       setIsEditing(false);
-      alert('Танзимот захира шуд!');
+      alert(t('settings') + ' ' + t('confirm'));
     } catch (error: any) {
-      alert('Хатогӣ ҳангоми захира: ' + error.message);
+      alert(t('error') + ': ' + error.message);
     }
     setLoading(false);
   };
@@ -708,6 +726,10 @@ const ProfilePage = ({ onLogout, isAdmin }: { onLogout: () => void; isAdmin: boo
       };
       reader.readAsDataURL(file);
     }
+  };
+
+  const toggleLanguage = () => {
+    setLanguage(language === 'tg' ? 'ru' : 'tg');
   };
 
   return (
@@ -751,7 +773,7 @@ const ProfilePage = ({ onLogout, isAdmin }: { onLogout: () => void; isAdmin: boo
               value={name}
               onChange={(e) => setName(e.target.value)}
               className="w-full bg-gray-900 border border-white/10 rounded-xl px-4 py-2 text-center font-bold focus:border-amber-500 outline-none"
-              placeholder="Номи шумо"
+              placeholder={t('name')}
             />
             <div className="flex gap-2">
               <motion.button 
@@ -760,14 +782,14 @@ const ProfilePage = ({ onLogout, isAdmin }: { onLogout: () => void; isAdmin: boo
                 disabled={loading}
                 className="flex-1 bg-amber-500 text-black py-2 rounded-xl font-bold text-sm flex items-center justify-center gap-2 neon-btn"
               >
-                <Check size={16} /> {loading ? '...' : 'Захира'}
+                <Check size={16} /> {loading ? '...' : t('confirm')}
               </motion.button>
               <motion.button 
                 whileTap={{ scale: 0.95 }}
                 onClick={() => setIsEditing(false)}
                 className="flex-1 bg-gray-800 text-white py-2 rounded-xl font-bold text-sm flex items-center justify-center gap-2 neon-btn"
               >
-                <X size={16} /> Бекор
+                <X size={16} /> {t('cancel')}
               </motion.button>
             </div>
           </div>
@@ -788,7 +810,7 @@ const ProfilePage = ({ onLogout, isAdmin }: { onLogout: () => void; isAdmin: boo
             >
               <div className="flex items-center gap-3">
                 <ShieldCheck size={18} className="text-amber-500" />
-                <span className="text-sm font-bold">Панели Админ</span>
+                <span className="text-sm font-bold">{t('adminPanel')}</span>
               </div>
               <ChevronRight size={16} className="text-gray-600" />
             </motion.button>
@@ -803,11 +825,25 @@ const ProfilePage = ({ onLogout, isAdmin }: { onLogout: () => void; isAdmin: boo
           >
             <div className="flex items-center gap-3">
               <Settings size={18} className="text-gray-400" />
-              <span className="text-sm font-bold">Танзимот</span>
+              <span className="text-sm font-bold">{t('settings')}</span>
             </div>
             <ChevronRight size={16} className="text-gray-600" />
           </motion.button>
         )}
+
+        <motion.button 
+          onClick={toggleLanguage}
+          whileTap={{ scale: 0.98 }}
+          className="w-full glass rounded-2xl p-4 flex items-center justify-between hover:bg-white/5 transition-all neon-btn"
+        >
+          <div className="flex items-center gap-3">
+            <span className="text-xl">🌐</span>
+            <span className="text-sm font-bold">{t('changeLanguage')}</span>
+          </div>
+          <span className="text-xs font-bold text-amber-500 uppercase tracking-widest">
+            {language === 'tg' ? t('tajik') : t('russian')}
+          </span>
+        </motion.button>
         
         <motion.button 
           onClick={onLogout}
@@ -815,7 +851,7 @@ const ProfilePage = ({ onLogout, isAdmin }: { onLogout: () => void; isAdmin: boo
           className="w-full bg-red-500/10 text-red-500 rounded-2xl p-4 flex items-center justify-center gap-2 font-bold mt-6 neon-btn"
         >
           <LogOut size={18} />
-          Баромад
+          {t('logout')}
         </motion.button>
       </div>
     </motion.div>
@@ -823,6 +859,7 @@ const ProfilePage = ({ onLogout, isAdmin }: { onLogout: () => void; isAdmin: boo
 };
 
 const AdminDashboard = ({ services }: { services: any[] }) => {
+  const { t } = useLanguage();
   const [newServiceName, setNewServiceName] = useState('');
   const [newServicePrice, setNewServicePrice] = useState('');
   const [newServiceTime, setNewServiceTime] = useState('');
@@ -844,7 +881,7 @@ const AdminDashboard = ({ services }: { services: any[] }) => {
       setNewServicePrice('');
       setNewServiceTime('');
       setNewServiceImg('');
-      alert('Хизматрасонӣ илова шуд!');
+      alert(t('addService') + ' ' + t('confirm'));
     } catch (error) {
       handleFirestoreError(error, OperationType.WRITE, 'services');
     }
@@ -864,7 +901,7 @@ const AdminDashboard = ({ services }: { services: any[] }) => {
 
   const handleDeleteService = async (id: string) => {
     if (id.startsWith('def')) {
-      alert('Ин хизматрасонии асосӣ аст ва онро нест кардан мумкин нест. Шумо метавонед хизматрасониҳои худро илова кунед.');
+      alert(t('cannotDeleteMainService'));
       return;
     }
     
@@ -876,23 +913,23 @@ const AdminDashboard = ({ services }: { services: any[] }) => {
   };
 
   const defaultServices = [
-    { id: 'def1', name: 'Мӯйсартарошии классикӣ', price: '50 смн', time: '45 дақ', img: 'https://avatars.mds.yandex.net/i?id=cae4b0b393ea9aea6cb8935142e12b8ba3f537dc-5354513-images-thumbs&n=13' },
-    { id: 'def2', name: 'Ороиши риш', price: '15 смн', time: '30 дақ', img: 'https://avatars.mds.yandex.net/i?id=fe33fcdaec438db37dd053f216a42e5db8512e88-5578930-images-thumbs&n=13' },
-    { id: 'def3', name: 'Поккории люкс', price: '25 смн', time: '60 дақ', img: 'https://avatars.mds.yandex.net/i?id=8ef5cc6e0493c0cc51c6ecca2412c41ff2e13c41-12603899-images-thumbs&n=13' },
+    { id: 'def1', name: t('classicHaircut'), price: `50 ${t('somoni')}`, time: `45 ${t('min')}`, img: 'https://avatars.mds.yandex.net/i?id=cae4b0b393ea9aea6cb8935142e12b8ba3f537dc-5354513-images-thumbs&n=13' },
+    { id: 'def2', name: t('beardTrim'), price: `15 ${t('somoni')}`, time: `30 ${t('min')}`, img: 'https://avatars.mds.yandex.net/i?id=fe33fcdaec438db37dd053f216a42e5db8512e88-5578930-images-thumbs&n=13' },
+    { id: 'def3', name: t('luxuryGrooming'), price: `25 ${t('somoni')}`, time: `60 ${t('min')}`, img: 'https://avatars.mds.yandex.net/i?id=8ef5cc6e0493c0cc51c6ecca2412c41ff2e13c41-12603899-images-thumbs&n=13' },
   ];
 
   const allServices = [...defaultServices, ...services];
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="p-6 pb-32">
-      <h2 className="text-2xl font-black mb-6">Панели Админ</h2>
+      <h2 className="text-2xl font-black mb-6">{t('adminPanel')}</h2>
       
       <div className="glass rounded-3xl p-6 mb-8">
-        <h3 className="font-bold mb-4">Иловаи хизматрасонии нав</h3>
+        <h3 className="font-bold mb-4">{t('addService')}</h3>
         <form onSubmit={handleAddService} className="space-y-3">
           <input 
             type="text" 
-            placeholder="Номи хизматрасонӣ" 
+            placeholder={t('name')} 
             value={newServiceName}
             onChange={(e) => setNewServiceName(e.target.value)}
             className="w-full bg-gray-900 border border-white/10 rounded-xl px-4 py-3 text-sm outline-none focus:border-amber-500"
@@ -901,7 +938,7 @@ const AdminDashboard = ({ services }: { services: any[] }) => {
           <div className="grid grid-cols-2 gap-3">
             <input 
               type="text" 
-              placeholder="Нарх (масалан: 50 смн)" 
+              placeholder={t('price')} 
               value={newServicePrice}
               onChange={(e) => setNewServicePrice(e.target.value)}
               className="w-full bg-gray-900 border border-white/10 rounded-xl px-4 py-3 text-sm outline-none focus:border-amber-500"
@@ -909,7 +946,7 @@ const AdminDashboard = ({ services }: { services: any[] }) => {
             />
             <input 
               type="text" 
-              placeholder="Вақт (масалан: 45 дақ)" 
+              placeholder={t('time')} 
               value={newServiceTime}
               onChange={(e) => setNewServiceTime(e.target.value)}
               className="w-full bg-gray-900 border border-white/10 rounded-xl px-4 py-3 text-sm outline-none focus:border-amber-500"
@@ -936,13 +973,13 @@ const AdminDashboard = ({ services }: { services: any[] }) => {
             disabled={loading}
             className="w-full bg-amber-500 text-black py-3 rounded-xl font-bold uppercase text-xs tracking-widest neon-btn"
           >
-            {loading ? 'Боргирӣ...' : 'Илова кардан'}
+            {loading ? t('loading') : t('add')}
           </motion.button>
         </form>
       </div>
 
       <div className="space-y-4">
-        <h3 className="font-bold mb-2">Хизматрасониҳои мавҷуда</h3>
+        <h3 className="font-bold mb-2">{t('services')}</h3>
         {allServices.map(service => (
           <div key={service.id} className="glass rounded-2xl p-4 flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -950,7 +987,7 @@ const AdminDashboard = ({ services }: { services: any[] }) => {
               <div>
                 <h4 className="font-bold text-sm">{service.name}</h4>
                 <p className="text-[10px] text-gray-500">{service.price} • {service.time}</p>
-                {service.id.startsWith('def') && <span className="text-[8px] text-amber-500 uppercase font-black">Асосӣ</span>}
+                {service.id.startsWith('def') && <span className="text-[8px] text-amber-500 uppercase font-black">{t('main')}</span>}
               </div>
             </div>
             <button 
@@ -967,6 +1004,7 @@ const AdminDashboard = ({ services }: { services: any[] }) => {
 };
 
 function AppContent() {
+  const { t } = useLanguage();
   const [user, setUser] = useState<FirebaseUser | null>(null);
   const [isGuest, setIsGuest] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -997,7 +1035,7 @@ function AppContent() {
     };
   }, []);
 
-  if (loading) return <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center text-amber-500">Боргирӣ...</div>;
+  if (loading) return <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center text-amber-500">{t('loading')}</div>;
 
   if (!user && !isGuest) return <AuthPage onGuestLogin={() => setIsGuest(true)} />;
 
@@ -1011,16 +1049,6 @@ function AppContent() {
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-white relative overflow-hidden">
-      {/* Global Background Image */}
-      <div className="fixed inset-0 -z-10 opacity-25 pointer-events-none">
-        <img 
-          src="https://i.postimg.cc/cHgwDGKp/Barbersop-noc-u-s-uutnym-osveseniem.png" 
-          className="w-full h-full object-cover" 
-          alt="Background"
-          referrerPolicy="no-referrer"
-        />
-      </div>
-
       {/* Background Accents */}
       <div className="fixed top-[-10%] left-[-10%] w-[50%] h-[50%] bg-amber-500/5 blur-[120px] rounded-full pointer-events-none" />
       <div className="fixed bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-amber-500/5 blur-[120px] rounded-full pointer-events-none" />
@@ -1037,11 +1065,11 @@ function AppContent() {
       </AnimatePresence>
 
       <nav className="fixed bottom-6 left-6 right-6 glass rounded-[2.5rem] p-2 flex justify-around items-center z-50 shadow-2xl border-white/10">
-        <NavItem to="/" icon={Star} label="Шарҳҳо" />
-        <NavItem to="/services" icon={Scissors} label="Хизматҳо" />
-        <NavItem to="/booking" icon={Calendar} label="Сабт" />
-        <NavItem to="/history" icon={Clock} label="Таърих" />
-        <NavItem to="/profile" icon={User} label="Профил" />
+        <NavItem to="/" icon={Star} label={t('reviews')} />
+        <NavItem to="/services" icon={Scissors} label={t('services')} />
+        <NavItem to="/booking" icon={Calendar} label={t('booking')} />
+        <NavItem to="/history" icon={Clock} label={t('history')} />
+        <NavItem to="/profile" icon={User} label={t('profile')} />
       </nav>
     </div>
   );
@@ -1049,10 +1077,12 @@ function AppContent() {
 
 export default function App() {
   return (
-    <ErrorBoundary>
-      <Router>
-        <AppContent />
-      </Router>
-    </ErrorBoundary>
+    <LanguageProvider>
+      <ErrorBoundary>
+        <Router>
+          <AppContent />
+        </Router>
+      </ErrorBoundary>
+    </LanguageProvider>
   );
 }
