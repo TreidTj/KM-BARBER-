@@ -24,7 +24,8 @@ import {
   orderBy, 
   serverTimestamp,
   getDocFromServer,
-  doc
+  doc,
+  setDoc
 } from 'firebase/firestore';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -599,11 +600,55 @@ const HistoryPage = ({ isAdmin }: { isAdmin: boolean }) => {
 
 const ReviewsPage = () => {
   const { t } = useLanguage();
-  const reviews = [
-    { id: 1, user: 'Фирдавс', rating: 5, comment: t('bestBarber'), date: `2 ${t('daysAgo')}` },
-    { id: 2, user: 'Суҳроб', rating: 4, comment: t('goodService'), date: `1 ${t('weeksAgo')}` },
-    { id: 3, user: 'Алишер', rating: 5, comment: t('goldenHands'), date: `3 ${t('daysAgo')}` },
+  const [dbReviews, setDbReviews] = useState<any[]>([]);
+  const [isWriting, setIsWriting] = useState(false);
+  const [rating, setRating] = useState(5);
+  const [comment, setComment] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const q = query(collection(db, 'reviews'), orderBy('createdAt', 'desc'));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setDbReviews(data);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  const defaultReviews = [
+    { id: 'def1', user: 'Фирдавс', rating: 5, comment: t('bestBarber'), date: `2 ${t('daysAgo')}` },
+    { id: 'def2', user: 'Суҳроб', rating: 4, comment: t('goodService'), date: `1 ${t('weeksAgo')}` },
+    { id: 'def3', user: 'Алишер', rating: 5, comment: t('goldenHands'), date: `3 ${t('daysAgo')}` },
   ];
+
+  const allReviews = [...dbReviews, ...defaultReviews];
+
+  const handleSubmitReview = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!auth.currentUser) {
+      alert(t('loginToContinue'));
+      return;
+    }
+    
+    setLoading(true);
+    try {
+      await addDoc(collection(db, 'reviews'), {
+        userId: auth.currentUser.uid,
+        user: auth.currentUser.displayName || auth.currentUser.email?.split('@')[0] || t('guest'),
+        rating,
+        comment,
+        date: t('today'),
+        createdAt: serverTimestamp()
+      });
+      setIsWriting(false);
+      setComment('');
+      setRating(5);
+      alert(t('reviewSuccess'));
+    } catch (error) {
+      handleFirestoreError(error, OperationType.WRITE, 'reviews');
+    }
+    setLoading(false);
+  };
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="pb-32">
@@ -653,13 +698,71 @@ const ReviewsPage = () => {
       </div>
 
       <div className="px-6">
-        <h3 className="text-xl font-black mb-6 flex items-center gap-2">
-          {t('reviews')}
-          <span className="text-xs bg-white/5 px-2 py-1 rounded-lg text-gray-500">{reviews.length}</span>
-        </h3>
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="text-xl font-black flex items-center gap-2">
+            {t('reviews')}
+            <span className="text-xs bg-white/5 px-2 py-1 rounded-lg text-gray-500">{allReviews.length}</span>
+          </h3>
+          {auth.currentUser && !isWriting && (
+            <motion.button 
+              whileTap={{ scale: 0.95 }}
+              onClick={() => setIsWriting(true)}
+              className="text-xs font-bold text-amber-500 uppercase tracking-widest"
+            >
+              {t('writeReview')}
+            </motion.button>
+          )}
+        </div>
+
+        {isWriting && (
+          <motion.form 
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            className="glass rounded-3xl p-5 mb-6"
+            onSubmit={handleSubmitReview}
+          >
+            <h4 className="font-bold mb-3">{t('rate')}</h4>
+            <div className="flex gap-2 mb-4">
+              {[1, 2, 3, 4, 5].map((star) => (
+                <button 
+                  key={star}
+                  type="button"
+                  onClick={() => setRating(star)}
+                >
+                  <Star size={24} className={star <= rating ? "text-amber-500 fill-amber-500" : "text-gray-700"} />
+                </button>
+              ))}
+            </div>
+            <textarea 
+              value={comment}
+              onChange={(e) => setComment(e.target.value)}
+              placeholder={t('writeYourReview')}
+              className="w-full bg-gray-900 border border-white/10 rounded-xl px-4 py-3 text-sm outline-none focus:border-amber-500 min-h-[100px] mb-4"
+              required
+            />
+            <div className="flex gap-3">
+              <motion.button 
+                type="button"
+                whileTap={{ scale: 0.95 }}
+                onClick={() => setIsWriting(false)}
+                className="flex-1 bg-gray-800 text-white py-3 rounded-xl font-bold uppercase text-xs tracking-widest"
+              >
+                {t('cancel')}
+              </motion.button>
+              <motion.button 
+                type="submit"
+                whileTap={{ scale: 0.95 }}
+                disabled={loading}
+                className="flex-1 bg-amber-500 text-black py-3 rounded-xl font-bold uppercase text-xs tracking-widest neon-btn"
+              >
+                {loading ? t('loading') : t('send')}
+              </motion.button>
+            </div>
+          </motion.form>
+        )}
         
         <div className="space-y-4">
-          {reviews.map((rev, idx) => (
+          {allReviews.map((rev, idx) => (
             <motion.div 
               key={rev.id}
               initial={{ opacity: 0, x: -20 }}
@@ -701,14 +804,32 @@ const ProfilePage = ({ onLogout, isAdmin }: { onLogout: () => void; isAdmin: boo
   const [loading, setLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  useEffect(() => {
+    if (user) {
+      const unsubscribe = onSnapshot(doc(db, 'users', user.uid), (docSnap) => {
+        if (docSnap.exists() && docSnap.data().photoURL) {
+          setAvatar(docSnap.data().photoURL);
+        }
+      });
+      return () => unsubscribe();
+    }
+  }, [user]);
+
   const handleSave = async () => {
     if (!auth.currentUser) return;
     setLoading(true);
     try {
       await updateProfile(auth.currentUser, {
         displayName: name,
-        photoURL: avatar
+        photoURL: avatar.length < 1000 ? avatar : auth.currentUser.photoURL // only save to auth if short
       });
+      
+      await setDoc(doc(db, 'users', auth.currentUser.uid), {
+        displayName: name,
+        photoURL: avatar,
+        updatedAt: serverTimestamp()
+      }, { merge: true });
+
       setIsEditing(false);
       alert(t('settings') + ' ' + t('confirm'));
     } catch (error: any) {
@@ -722,7 +843,35 @@ const ProfilePage = ({ onLogout, isAdmin }: { onLogout: () => void; isAdmin: boo
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        setAvatar(reader.result as string);
+        // Compress image before saving
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          const MAX_WIDTH = 200;
+          const MAX_HEIGHT = 200;
+          let width = img.width;
+          let height = img.height;
+
+          if (width > height) {
+            if (width > MAX_WIDTH) {
+              height *= MAX_WIDTH / width;
+              width = MAX_WIDTH;
+            }
+          } else {
+            if (height > MAX_HEIGHT) {
+              width *= MAX_HEIGHT / height;
+              height = MAX_HEIGHT;
+            }
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx?.drawImage(img, 0, 0, width, height);
+          const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+          setAvatar(dataUrl);
+        };
+        img.src = reader.result as string;
       };
       reader.readAsDataURL(file);
     }
