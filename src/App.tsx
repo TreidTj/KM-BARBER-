@@ -270,9 +270,9 @@ const HomePage = () => {
   const user = auth.currentUser;
 
   const services = [
-    { id: 1, name: 'Мӯйсартарошии классикӣ', price: '50 смн', time: '45 дақ', img: 'https://images.unsplash.com/photo-1585747860715-2ba37e788b70?auto=format&fit=crop&w=400' },
-    { id: 2, name: 'Ороиши риш', price: '15 смн', time: '30 дақ', img: 'https://images.unsplash.com/photo-1621605815841-aa88c82b02aa?auto=format&fit=crop&w=400' },
-    { id: 3, name: 'Поккории люкс', price: '25 смн', time: '60 дақ', img: 'https://images.unsplash.com/photo-1512690199101-8d8eb8bb995e?auto=format&fit=crop&w=400' },
+    { id: 1, name: 'Мӯйсартарошии классикӣ', price: '50 смн', time: '45 дақ', img: 'https://avatars.mds.yandex.net/i?id=cae4b0b393ea9aea6cb8935142e12b8ba3f537dc-5354513-images-thumbs&n=13' },
+    { id: 2, name: 'Ороиши риш', price: '15 смн', time: '30 дақ', img: 'https://avatars.mds.yandex.net/i?id=fe33fcdaec438db37dd053f216a42e5db8512e88-5578930-images-thumbs&n=13' },
+    { id: 3, name: 'Поккории люкс', price: '25 смн', time: '60 дақ', img: 'https://avatars.mds.yandex.net/i?id=8ef5cc6e0493c0cc51c6ecca2412c41ff2e13c41-12603899-images-thumbs&n=13' },
   ];
 
   return (
@@ -550,7 +550,7 @@ const ReviewsPage = () => {
       {/* Stylist Profile Header */}
       <div className="relative h-80 mb-8">
         <img 
-          src="https://i.imgur.com/nbxhPa1.jpg" 
+          src="https://i.postimg.cc/vD5tbkz/IMG-20260324-021500.jpg" 
           className="w-full h-full object-cover"
           alt="Muhammad"
           referrerPolicy="no-referrer"
