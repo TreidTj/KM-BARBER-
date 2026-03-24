@@ -270,9 +270,9 @@ const HomePage = () => {
   const user = auth.currentUser;
 
   const services = [
-    { id: 1, name: 'Мӯйсартарошии классикӣ', price: '50 смн', time: '45 дақ', img: 'https://avatars.mds.yandex.net/i?id=cae4b0b393ea9aea6cb8935142e12b8ba3f537dc-5354513-images-thumbs&n=13' },
-    { id: 2, name: 'Ороиши риш', price: '15 смн', time: '30 дақ', img: 'https://avatars.mds.yandex.net/i?id=fe33fcdaec438db37dd053f216a42e5db8512e88-5578930-images-thumbs&n=13' },
-    { id: 3, name: 'Поккории люкс', price: '25 смн', time: '60 дақ', img: 'https://avatars.mds.yandex.net/i?id=8ef5cc6e0493c0cc51c6ecca2412c41ff2e13c41-12603899-images-thumbs&n=13' },
+    { id: 1, name: 'Мӯйсартарошии классикӣ', price: '50 смн', time: '45 дақ', img: 'https://images.unsplash.com/photo-1585747860715-2ba37e788b70?auto=format&fit=crop&w=400' },
+    { id: 2, name: 'Ороиши риш', price: '15 смн', time: '30 дақ', img: 'https://images.unsplash.com/photo-1621605815841-aa88c82b02aa?auto=format&fit=crop&w=400' },
+    { id: 3, name: 'Поккории люкс', price: '25 смн', time: '60 дақ', img: 'https://images.unsplash.com/photo-1512690199101-8d8eb8bb995e?auto=format&fit=crop&w=400' },
   ];
 
   return (
@@ -286,7 +286,12 @@ const HomePage = () => {
       <header className="px-6 pt-4 pb-2 flex items-center justify-between shrink-0">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center border border-white/5 overflow-hidden">
-            <img src="https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&w=100" alt="User" className="w-full h-full object-cover" />
+            <img 
+              src="https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&w=100" 
+              alt="User" 
+              className="w-full h-full object-cover" 
+              referrerPolicy="no-referrer"
+            />
           </div>
           <div>
             <p className="text-xs text-gray-500 font-medium">Хуш омадед</p>
@@ -321,7 +326,12 @@ const HomePage = () => {
                 className="w-64 md:w-full max-w-sm flex-shrink-0 glass rounded-[2rem] overflow-hidden border border-white/5 shadow-2xl"
               >
                 <div className="h-40 relative">
-                  <img src={service.img} className="w-full h-full object-cover" alt={service.name} />
+                  <img 
+                    src={service.img} 
+                    className="w-full h-full object-cover" 
+                    alt={service.name} 
+                    referrerPolicy="no-referrer"
+                  />
                   <div className="absolute top-4 right-4 bg-amber-500 text-black px-3 py-1 rounded-full text-xs font-black shadow-lg">
                     {service.price}
                   </div>
@@ -418,31 +428,6 @@ const BookingPage = ({ isGuest }: { isGuest: boolean }) => {
     >
       <div className="px-6 pt-12 relative z-10">
         <div className="glass rounded-[2.5rem] p-6 mb-6">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h2 className="text-2xl font-black mb-1">Муҳаммад</h2>
-              <p className="text-gray-500 text-sm font-medium">Барбери касбӣ</p>
-            </div>
-            <div className="flex flex-col items-end">
-              <div className="flex items-center gap-1 mb-1">
-                <Star size={14} className="text-amber-500 fill-amber-500" />
-                <span className="font-bold">4.9</span>
-              </div>
-              <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">128 Шарҳҳо</p>
-            </div>
-          </div>
-          
-          <div className="flex gap-3 mb-6">
-            <button className="flex-1 glass border-white/10 py-3 rounded-2xl flex items-center justify-center gap-2 hover:bg-amber-500 hover:text-black transition-all">
-              <MessageSquare size={16} />
-              <span className="text-xs font-bold uppercase tracking-widest">Паём</span>
-            </button>
-            <button className="flex-1 glass border-white/10 py-3 rounded-2xl flex items-center justify-center gap-2 hover:bg-amber-500 hover:text-black transition-all">
-              <Phone size={16} />
-              <span className="text-xs font-bold uppercase tracking-widest">Занг</span>
-            </button>
-          </div>
-
           <div className="space-y-4">
             <h3 className="font-black text-lg">Интихоби сана</h3>
             <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
@@ -578,7 +563,21 @@ const ReviewsPage = () => {
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 0.2 }}
           >
-            <h2 className="text-4xl font-black mb-2 tracking-tight">Муҳаммад</h2>
+            <div className="flex items-center justify-center gap-3 mb-2">
+              <h2 className="text-4xl font-black tracking-tight">Муҳаммад</h2>
+              <motion.a 
+                href="https://t.me/km_agammed_005"
+                target="_blank"
+                rel="noopener noreferrer"
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+                className="bg-[#0088cc] p-2 rounded-xl text-white shadow-lg shadow-[#0088cc]/20 flex items-center justify-center"
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/>
+                </svg>
+              </motion.a>
+            </div>
             <div className="flex items-center justify-center gap-4 text-sm font-bold uppercase tracking-widest text-gray-400">
               <div className="flex items-center gap-1">
                 <Star size={14} className="text-amber-500 fill-amber-500" />
@@ -673,7 +672,12 @@ const ProfilePage = ({ onLogout }: { onLogout: () => void }) => {
       <div className="flex flex-col items-center mb-8">
         <div className="relative group">
           <div className="w-24 h-24 rounded-full border-2 border-amber-500 p-1 mb-4 overflow-hidden">
-            <img src={avatar} className="w-full h-full object-cover rounded-full" alt="Profile" />
+            <img 
+              src={avatar} 
+              className="w-full h-full object-cover rounded-full" 
+              alt="Profile" 
+              referrerPolicy="no-referrer"
+            />
           </div>
           {isEditing && (
             <motion.button 
@@ -787,7 +791,7 @@ function AppContent() {
       {/* Global Background Image */}
       <div className="fixed inset-0 -z-10 opacity-25 pointer-events-none">
         <img 
-          src="https://i.imgur.com/8bvLdBj.jpg" 
+          src="https://images.unsplash.com/photo-1585747860715-2ba37e788b70?auto=format&fit=crop&w=1920" 
           className="w-full h-full object-cover" 
           alt="Background"
           referrerPolicy="no-referrer"
