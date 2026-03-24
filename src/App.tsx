@@ -14,6 +14,9 @@ import {
 import { 
   collection, 
   addDoc, 
+  updateDoc,
+  deleteDoc,
+  onSnapshot,
   query, 
   where, 
   getDocs, 
@@ -235,7 +238,7 @@ const AuthPage = ({ onGuestLogin }: { onGuestLogin: () => void }) => {
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             disabled={loading}
-            className="w-full bg-amber-500 text-black py-4 rounded-2xl font-black uppercase tracking-widest flex items-center justify-center gap-2 disabled:opacity-50"
+            className="w-full bg-amber-500 text-black py-4 rounded-2xl font-black uppercase tracking-widest flex items-center justify-center gap-2 disabled:opacity-50 neon-btn"
           >
             {loading ? 'Боргирӣ...' : (isLogin ? <LogIn size={18} /> : <UserPlus size={18} />)}
             {loading ? '' : (isLogin ? 'Ворид шудан' : 'Бақайдгирӣ')}
@@ -266,14 +269,16 @@ const AuthPage = ({ onGuestLogin }: { onGuestLogin: () => void }) => {
   );
 };
 
-const HomePage = () => {
+const HomePage = ({ services }: { services: any[] }) => {
   const user = auth.currentUser;
 
-  const services = [
-    { id: 1, name: 'Мӯйсартарошии классикӣ', price: '50 смн', time: '45 дақ', img: 'https://avatars.mds.yandex.net/i?id=cae4b0b393ea9aea6cb8935142e12b8ba3f537dc-5354513-images-thumbs&n=13' },
-    { id: 2, name: 'Ороиши риш', price: '15 смн', time: '30 дақ', img: 'https://avatars.mds.yandex.net/i?id=fe33fcdaec438db37dd053f216a42e5db8512e88-5578930-images-thumbs&n=13' },
-    { id: 3, name: 'Поккории люкс', price: '25 смн', time: '60 дақ', img: 'https://avatars.mds.yandex.net/i?id=8ef5cc6e0493c0cc51c6ecca2412c41ff2e13c41-12603899-images-thumbs&n=13' },
+  const defaultServices = [
+    { id: 'def1', name: 'Мӯйсартарошии классикӣ', price: '50 смн', time: '45 дақ', img: 'https://avatars.mds.yandex.net/i?id=cae4b0b393ea9aea6cb8935142e12b8ba3f537dc-5354513-images-thumbs&n=13' },
+    { id: 'def2', name: 'Ороиши риш', price: '15 смн', time: '30 дақ', img: 'https://avatars.mds.yandex.net/i?id=fe33fcdaec438db37dd053f216a42e5db8512e88-5578930-images-thumbs&n=13' },
+    { id: 'def3', name: 'Поккории люкс', price: '25 смн', time: '60 дақ', img: 'https://avatars.mds.yandex.net/i?id=8ef5cc6e0493c0cc51c6ecca2412c41ff2e13c41-12603899-images-thumbs&n=13' },
   ];
+
+  const displayServices = [...defaultServices, ...services];
 
   return (
     <motion.div 
@@ -286,12 +291,16 @@ const HomePage = () => {
       <header className="px-6 pt-4 pb-2 flex items-center justify-between shrink-0">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center border border-white/5 overflow-hidden">
-            <img 
-              src="https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&w=100" 
-              alt="User" 
-              className="w-full h-full object-cover" 
-              referrerPolicy="no-referrer"
-            />
+            {user?.photoURL ? (
+              <img 
+                src={user.photoURL} 
+                alt="User" 
+                className="w-full h-full object-cover" 
+                referrerPolicy="no-referrer"
+              />
+            ) : (
+              <User size={20} className="text-gray-500" />
+            )}
           </div>
           <div>
             <p className="text-xs text-gray-500 font-medium">Хуш омадед</p>
@@ -302,7 +311,7 @@ const HomePage = () => {
         </div>
         <motion.button 
           whileTap={{ scale: 0.9 }}
-          className="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center border border-white/5"
+          className="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center border border-white/5 neon-btn"
         >
           <Bell size={20} className="text-gray-400" />
         </motion.button>
@@ -318,7 +327,7 @@ const HomePage = () => {
           
           {/* Mobile: Horizontal Scroll | Desktop: Grid */}
           <div className="flex md:grid md:grid-cols-3 gap-6 overflow-x-auto md:overflow-visible scrollbar-hide pb-4 justify-start md:justify-items-center">
-            {services.map((service) => (
+            {displayServices.map((service) => (
               <motion.div 
                 key={service.id}
                 whileHover={{ scale: 1.05 }}
@@ -344,7 +353,7 @@ const HomePage = () => {
                   <Link to="/booking">
                     <motion.button 
                       whileTap={{ scale: 0.95 }}
-                      className="w-full bg-amber-500 text-black py-4 rounded-2xl text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2 shadow-lg shadow-amber-500/20"
+                      className="w-full bg-amber-500 text-black py-4 rounded-2xl text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2 shadow-lg shadow-amber-500/20 neon-btn"
                     >
                       <Calendar size={16} />
                       САБТ
@@ -476,7 +485,7 @@ const BookingPage = ({ isGuest }: { isGuest: boolean }) => {
           whileTap={{ scale: 0.98 }}
           onClick={handleBooking}
           disabled={loading}
-          className="w-full bg-amber-500 text-black py-5 rounded-3xl font-black uppercase tracking-widest shadow-xl shadow-amber-500/20 disabled:opacity-50"
+          className="w-full bg-amber-500 text-black py-5 rounded-3xl font-black uppercase tracking-widest shadow-xl shadow-amber-500/20 disabled:opacity-50 neon-btn"
         >
           {loading ? 'Боргирӣ...' : 'Тасдиқи сабт'}
         </motion.button>
@@ -485,7 +494,7 @@ const BookingPage = ({ isGuest }: { isGuest: boolean }) => {
   );
 };
 
-const HistoryPage = () => {
+const HistoryPage = ({ isAdmin }: { isAdmin: boolean }) => {
   const [appointments, setAppointments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -494,11 +503,13 @@ const HistoryPage = () => {
       const user = auth.currentUser;
       if (user) {
         try {
-          const q = query(
-            collection(db, 'appointments'),
-            where('user_id', '==', user.uid),
-            orderBy('date', 'desc')
-          );
+          const q = isAdmin 
+            ? query(collection(db, 'appointments'), orderBy('date', 'desc'))
+            : query(
+                collection(db, 'appointments'),
+                where('user_id', '==', user.uid),
+                orderBy('date', 'desc')
+              );
           const querySnapshot = await getDocs(q);
           const data = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
           setAppointments(data);
@@ -509,25 +520,51 @@ const HistoryPage = () => {
       setLoading(false);
     };
     fetchHistory();
-  }, []);
+  }, [isAdmin]);
+
+  const toggleStatus = async (id: string, currentStatus: string) => {
+    if (!isAdmin) return;
+    const newStatus = currentStatus === 'completed' ? 'confirmed' : 'completed';
+    try {
+      await updateDoc(doc(db, 'appointments', id), { status: newStatus });
+      setAppointments(prev => prev.map(app => app.id === id ? { ...app, status: newStatus } : app));
+    } catch (error) {
+      handleFirestoreError(error, OperationType.UPDATE, 'appointments');
+    }
+  };
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="p-6 pb-32">
-      <h2 className="text-2xl font-black mb-6">Таърихи ташрифҳо</h2>
+      <h2 className="text-2xl font-black mb-6">{isAdmin ? 'Ҳамаи сабтҳо' : 'Таърихи ташрифҳо'}</h2>
       {loading ? (
         <p className="text-gray-500">Боргирӣ...</p>
       ) : appointments.length > 0 ? (
         <div className="space-y-4">
           {appointments.map(app => (
-            <div key={app.id} className="glass rounded-2xl p-4 border-white/5">
+            <div key={app.id} className="glass rounded-2xl p-4 border-white/5 relative">
               <div className="flex justify-between items-start mb-2">
                 <h4 className="font-bold">Мӯйсартарошӣ</h4>
-                <span className="text-[10px] bg-gray-800 px-2 py-1 rounded-lg text-gray-400 uppercase">Тасдиқ шуд</span>
+                <div className="flex items-center gap-2">
+                  {isAdmin && (
+                    <button 
+                      onClick={() => toggleStatus(app.id, app.status)}
+                      className={`p-1 rounded-md transition-all ${app.status === 'completed' ? 'bg-green-500 text-black' : 'bg-gray-800 text-gray-500'}`}
+                    >
+                      <Check size={14} />
+                    </button>
+                  )}
+                  <span className={`text-[10px] px-2 py-1 rounded-lg uppercase ${app.status === 'completed' ? 'bg-green-500/10 text-green-500' : 'bg-gray-800 text-gray-400'}`}>
+                    {app.status === 'completed' ? 'Иҷро шуд' : 'Тасдиқ шуд'}
+                  </span>
+                </div>
               </div>
               <div className="flex items-center gap-4 text-xs text-gray-500">
                 <div className="flex items-center gap-1"><Calendar size={12} /> {app.date}</div>
                 <div className="flex items-center gap-1"><Clock size={12} /> {app.time}</div>
               </div>
+              {isAdmin && app.user_id !== 'guest' && (
+                <p className="text-[10px] text-gray-600 mt-2">UID: {app.user_id}</p>
+              )}
             </div>
           ))}
         </div>
@@ -550,37 +587,37 @@ const ReviewsPage = () => {
       {/* Stylist Profile Header */}
       <div className="relative h-80 mb-8">
         <img 
-          src="https://i.postimg.cc/vD5tbkz/IMG-20260324-021500.jpg" 
+          src="https://i.postimg.cc/gj0JMvBW/photo-2026-03-24-05-38-11.jpg" 
           className="w-full h-full object-cover"
           alt="Muhammad"
           referrerPolicy="no-referrer"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-[#0a0a0a]/40 to-transparent" />
         
-        <div className="absolute bottom-0 left-0 right-0 p-8 text-center">
+        <div className="absolute bottom-0 left-0 right-0 p-4 text-center">
           <motion.div 
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 0.2 }}
           >
-            <div className="flex items-center justify-center gap-3 mb-2">
-              <h2 className="text-4xl font-black tracking-tight">Муҳаммад</h2>
+            <div className="flex items-center justify-center gap-2 mb-1">
+              <h2 className="text-xl font-black tracking-tight">Муҳаммад</h2>
               <motion.a 
                 href="https://t.me/km_agammed_005"
                 target="_blank"
                 rel="noopener noreferrer"
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.9 }}
-                className="bg-[#0088cc] p-2 rounded-xl text-white shadow-lg shadow-[#0088cc]/20 flex items-center justify-center"
+                className="bg-[#0088cc] p-1.5 rounded-lg text-white shadow-lg shadow-[#0088cc]/20 flex items-center justify-center"
               >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                   <path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/>
                 </svg>
               </motion.a>
             </div>
-            <div className="flex items-center justify-center gap-4 text-sm font-bold uppercase tracking-widest text-gray-400">
+            <div className="flex items-center justify-center gap-3 text-[10px] font-bold uppercase tracking-widest text-gray-400">
               <div className="flex items-center gap-1">
-                <Star size={14} className="text-amber-500 fill-amber-500" />
+                <Star size={10} className="text-amber-500 fill-amber-500" />
                 <span className="text-white">4.7</span>
               </div>
               <div className="w-1 h-1 bg-gray-700 rounded-full" />
@@ -632,11 +669,11 @@ const ReviewsPage = () => {
   );
 };
 
-const ProfilePage = ({ onLogout }: { onLogout: () => void }) => {
+const ProfilePage = ({ onLogout, isAdmin }: { onLogout: () => void; isAdmin: boolean }) => {
   const user = auth.currentUser;
   const [isEditing, setIsEditing] = useState(false);
   const [name, setName] = useState(user?.displayName || user?.email?.split('@')[0] || 'Мизоҷи Мӯҳтарам');
-  const [avatar, setAvatar] = useState(user?.photoURL || "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&w=200");
+  const [avatar, setAvatar] = useState(user?.photoURL || "");
   const [loading, setLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -671,19 +708,23 @@ const ProfilePage = ({ onLogout }: { onLogout: () => void }) => {
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="p-6 pb-32">
       <div className="flex flex-col items-center mb-8">
         <div className="relative group">
-          <div className="w-24 h-24 rounded-full border-2 border-amber-500 p-1 mb-4 overflow-hidden">
-            <img 
-              src={avatar} 
-              className="w-full h-full object-cover rounded-full" 
-              alt="Profile" 
-              referrerPolicy="no-referrer"
-            />
+          <div className="w-24 h-24 rounded-full border-2 border-amber-500 p-1 mb-4 overflow-hidden flex items-center justify-center bg-gray-900">
+            {avatar ? (
+              <img 
+                src={avatar} 
+                className="w-full h-full object-cover rounded-full" 
+                alt="Profile" 
+                referrerPolicy="no-referrer"
+              />
+            ) : (
+              <User size={40} className="text-gray-700" />
+            )}
           </div>
           {isEditing && (
             <motion.button 
               whileTap={{ scale: 0.9 }}
               onClick={() => fileInputRef.current?.click()}
-              className="absolute bottom-4 right-0 bg-amber-500 text-black p-2 rounded-full shadow-lg border-2 border-[#0a0a0a]"
+              className="absolute bottom-4 right-0 bg-amber-500 text-black p-2 rounded-full shadow-lg border-2 border-[#0a0a0a] neon-btn"
             >
               <Camera size={16} />
             </motion.button>
@@ -711,14 +752,14 @@ const ProfilePage = ({ onLogout }: { onLogout: () => void }) => {
                 whileTap={{ scale: 0.95 }}
                 onClick={handleSave}
                 disabled={loading}
-                className="flex-1 bg-amber-500 text-black py-2 rounded-xl font-bold text-sm flex items-center justify-center gap-2"
+                className="flex-1 bg-amber-500 text-black py-2 rounded-xl font-bold text-sm flex items-center justify-center gap-2 neon-btn"
               >
                 <Check size={16} /> {loading ? '...' : 'Захира'}
               </motion.button>
               <motion.button 
                 whileTap={{ scale: 0.95 }}
                 onClick={() => setIsEditing(false)}
-                className="flex-1 bg-gray-800 text-white py-2 rounded-xl font-bold text-sm flex items-center justify-center gap-2"
+                className="flex-1 bg-gray-800 text-white py-2 rounded-xl font-bold text-sm flex items-center justify-center gap-2 neon-btn"
               >
                 <X size={16} /> Бекор
               </motion.button>
@@ -733,11 +774,26 @@ const ProfilePage = ({ onLogout }: { onLogout: () => void }) => {
       </div>
 
       <div className="space-y-3">
+        {isAdmin && (
+          <Link to="/admin">
+            <motion.button 
+              whileTap={{ scale: 0.98 }}
+              className="w-full glass rounded-2xl p-4 flex items-center justify-between hover:bg-white/5 transition-all mb-3 neon-btn"
+            >
+              <div className="flex items-center gap-3">
+                <ShieldCheck size={18} className="text-amber-500" />
+                <span className="text-sm font-bold">Панели Админ</span>
+              </div>
+              <ChevronRight size={16} className="text-gray-600" />
+            </motion.button>
+          </Link>
+        )}
+
         {!isEditing && (
           <motion.button 
             onClick={() => setIsEditing(true)}
             whileTap={{ scale: 0.98 }}
-            className="w-full glass rounded-2xl p-4 flex items-center justify-between hover:bg-white/5 transition-all"
+            className="w-full glass rounded-2xl p-4 flex items-center justify-between hover:bg-white/5 transition-all neon-btn"
           >
             <div className="flex items-center gap-3">
               <Settings size={18} className="text-gray-400" />
@@ -750,7 +806,7 @@ const ProfilePage = ({ onLogout }: { onLogout: () => void }) => {
         <motion.button 
           onClick={onLogout}
           whileTap={{ scale: 0.95 }}
-          className="w-full bg-red-500/10 text-red-500 rounded-2xl p-4 flex items-center justify-center gap-2 font-bold mt-6"
+          className="w-full bg-red-500/10 text-red-500 rounded-2xl p-4 flex items-center justify-center gap-2 font-bold mt-6 neon-btn"
         >
           <LogOut size={18} />
           Баромад
@@ -760,18 +816,179 @@ const ProfilePage = ({ onLogout }: { onLogout: () => void }) => {
   );
 };
 
+const AdminDashboard = ({ services }: { services: any[] }) => {
+  const [newServiceName, setNewServiceName] = useState('');
+  const [newServicePrice, setNewServicePrice] = useState('');
+  const [newServiceTime, setNewServiceTime] = useState('');
+  const [newServiceImg, setNewServiceImg] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const handleAddService = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      await addDoc(collection(db, 'services'), {
+        name: newServiceName,
+        price: newServicePrice,
+        time: newServiceTime,
+        img: newServiceImg || 'https://avatars.mds.yandex.net/i?id=cae4b0b393ea9aea6cb8935142e12b8ba3f537dc-5354513-images-thumbs&n=13',
+        createdAt: serverTimestamp()
+      });
+      setNewServiceName('');
+      setNewServicePrice('');
+      setNewServiceTime('');
+      setNewServiceImg('');
+      alert('Хизматрасонӣ илова шуд!');
+    } catch (error) {
+      handleFirestoreError(error, OperationType.WRITE, 'services');
+    }
+    setLoading(false);
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setNewServiceImg(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleDeleteService = async (id: string) => {
+    if (id.startsWith('def')) {
+      alert('Ин хизматрасонии асосӣ аст ва онро нест кардан мумкин нест. Шумо метавонед хизматрасониҳои худро илова кунед.');
+      return;
+    }
+    
+    try {
+      await deleteDoc(doc(db, 'services', id));
+    } catch (error) {
+      handleFirestoreError(error, OperationType.DELETE, 'services');
+    }
+  };
+
+  const defaultServices = [
+    { id: 'def1', name: 'Мӯйсартарошии классикӣ', price: '50 смн', time: '45 дақ', img: 'https://avatars.mds.yandex.net/i?id=cae4b0b393ea9aea6cb8935142e12b8ba3f537dc-5354513-images-thumbs&n=13' },
+    { id: 'def2', name: 'Ороиши риш', price: '15 смн', time: '30 дақ', img: 'https://avatars.mds.yandex.net/i?id=fe33fcdaec438db37dd053f216a42e5db8512e88-5578930-images-thumbs&n=13' },
+    { id: 'def3', name: 'Поккории люкс', price: '25 смн', time: '60 дақ', img: 'https://avatars.mds.yandex.net/i?id=8ef5cc6e0493c0cc51c6ecca2412c41ff2e13c41-12603899-images-thumbs&n=13' },
+  ];
+
+  const allServices = [...defaultServices, ...services];
+
+  return (
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="p-6 pb-32">
+      <h2 className="text-2xl font-black mb-6">Панели Админ</h2>
+      
+      <div className="glass rounded-3xl p-6 mb-8">
+        <h3 className="font-bold mb-4">Иловаи хизматрасонии нав</h3>
+        <form onSubmit={handleAddService} className="space-y-3">
+          <input 
+            type="text" 
+            placeholder="Номи хизматрасонӣ" 
+            value={newServiceName}
+            onChange={(e) => setNewServiceName(e.target.value)}
+            className="w-full bg-gray-900 border border-white/10 rounded-xl px-4 py-3 text-sm outline-none focus:border-amber-500"
+            required
+          />
+          <div className="grid grid-cols-2 gap-3">
+            <input 
+              type="text" 
+              placeholder="Нарх (масалан: 50 смн)" 
+              value={newServicePrice}
+              onChange={(e) => setNewServicePrice(e.target.value)}
+              className="w-full bg-gray-900 border border-white/10 rounded-xl px-4 py-3 text-sm outline-none focus:border-amber-500"
+              required
+            />
+            <input 
+              type="text" 
+              placeholder="Вақт (масалан: 45 дақ)" 
+              value={newServiceTime}
+              onChange={(e) => setNewServiceTime(e.target.value)}
+              className="w-full bg-gray-900 border border-white/10 rounded-xl px-4 py-3 text-sm outline-none focus:border-amber-500"
+              required
+            />
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="w-16 h-16 rounded-xl bg-gray-900 border border-white/10 overflow-hidden flex items-center justify-center shrink-0">
+              {newServiceImg ? (
+                <img src={newServiceImg} className="w-full h-full object-cover" alt="Preview" />
+              ) : (
+                <Camera size={24} className="text-gray-700" />
+              )}
+            </div>
+            <input 
+              type="file" 
+              onChange={handleFileChange} 
+              className="text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-amber-500 file:text-black hover:file:bg-amber-600"
+              accept="image/*"
+            />
+          </div>
+          <motion.button 
+            whileTap={{ scale: 0.95 }}
+            disabled={loading}
+            className="w-full bg-amber-500 text-black py-3 rounded-xl font-bold uppercase text-xs tracking-widest neon-btn"
+          >
+            {loading ? 'Боргирӣ...' : 'Илова кардан'}
+          </motion.button>
+        </form>
+      </div>
+
+      <div className="space-y-4">
+        <h3 className="font-bold mb-2">Хизматрасониҳои мавҷуда</h3>
+        {allServices.map(service => (
+          <div key={service.id} className="glass rounded-2xl p-4 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <img src={service.img} className="w-12 h-12 rounded-xl object-cover" alt="" />
+              <div>
+                <h4 className="font-bold text-sm">{service.name}</h4>
+                <p className="text-[10px] text-gray-500">{service.price} • {service.time}</p>
+                {service.id.startsWith('def') && <span className="text-[8px] text-amber-500 uppercase font-black">Асосӣ</span>}
+              </div>
+            </div>
+            <button 
+              onClick={() => handleDeleteService(service.id)}
+              className="text-red-500 p-2 hover:bg-red-500/10 rounded-lg transition-all"
+            >
+              <X size={18} />
+            </button>
+          </div>
+        ))}
+      </div>
+    </motion.div>
+  );
+};
+
 function AppContent() {
   const [user, setUser] = useState<FirebaseUser | null>(null);
   const [isGuest, setIsGuest] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [services, setServices] = useState<any[]>([]);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setUser(user);
+      if (user) {
+        const email = user.email?.toLowerCase();
+        setIsAdmin(email === 'muhammad@gmail.com' || email === 'xvlne2005@gmail.com');
+      } else {
+        setIsAdmin(false);
+      }
       setLoading(false);
     });
 
-    return () => unsubscribe();
+    // Listen to services
+    const servicesUnsubscribe = onSnapshot(collection(db, 'services'), (snapshot) => {
+      const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setServices(data);
+    });
+
+    return () => {
+      unsubscribe();
+      servicesUnsubscribe();
+    };
   }, []);
 
   if (loading) return <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center text-amber-500">Боргирӣ...</div>;
@@ -791,7 +1008,7 @@ function AppContent() {
       {/* Global Background Image */}
       <div className="fixed inset-0 -z-10 opacity-25 pointer-events-none">
         <img 
-          src="https://images.unsplash.com/photo-1585747860715-2ba37e788b70?auto=format&fit=crop&w=1920" 
+          src="https://i.postimg.cc/cHgwDGKp/Barbersop-noc-u-s-uutnym-osveseniem.png" 
           className="w-full h-full object-cover" 
           alt="Background"
           referrerPolicy="no-referrer"
@@ -804,11 +1021,12 @@ function AppContent() {
 
       <AnimatePresence mode="wait">
         <Routes>
-          <Route path="/" element={<HomePage />} />
+          <Route path="/" element={<HomePage services={services} />} />
           <Route path="/booking" element={<BookingPage isGuest={isGuest} />} />
-          <Route path="/history" element={<HistoryPage />} />
+          <Route path="/history" element={<HistoryPage isAdmin={isAdmin} />} />
           <Route path="/reviews" element={<ReviewsPage />} />
-          <Route path="/profile" element={<ProfilePage onLogout={handleLogout} />} />
+          <Route path="/profile" element={<ProfilePage onLogout={handleLogout} isAdmin={isAdmin} />} />
+          {isAdmin && <Route path="/admin" element={<AdminDashboard services={services} />} />}
         </Routes>
       </AnimatePresence>
 

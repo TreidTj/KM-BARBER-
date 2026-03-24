@@ -40,7 +40,8 @@ service cloud.firestore {
     function isAdmin() {
       return isAuthenticated() &&
         (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
-          (request.auth.token.email == "xvlne2005@gmail.com" && request.auth.token.email_verified == true));
+          (request.auth.token.email.lower() == "muhammad@gmail.com") ||
+          (request.auth.token.email.lower() == "xvlne2005@gmail.com"));
     }
 
     function isValidEmail(email) {
@@ -58,7 +59,15 @@ service cloud.firestore {
              data.user_id is string &&
              data.date is string && data.date.matches("^\\d{4}-\\d{2}-\\d{2}$") &&
              data.time is string && data.time.matches("^\\d{2}:\\d{2}(:\\d{2})?$") &&
-             data.status in ['confirmed', 'pending', 'cancelled'];
+             data.status in ['confirmed', 'pending', 'cancelled', 'completed'];
+    }
+
+    function isValidService(data) {
+      return data.keys().hasAll(['name', 'price', 'time', 'img']) &&
+             data.name is string && data.name.size() > 0 &&
+             data.price is string &&
+             data.time is string &&
+             data.img is string;
     }
 
     // ===============================================================
@@ -83,6 +92,13 @@ service cloud.firestore {
       allow update: if (isAuthenticated() && (resource.data.user_id == request.auth.uid || isAdmin()) && isValidAppointment(request.resource.data)) ||
                     (resource.data.user_id == 'guest' && isValidAppointment(request.resource.data));
       
+      allow delete: if isAdmin();
+    }
+
+    match /services/{serviceId} {
+      allow read: if true;
+      allow create: if isAdmin() && isValidService(request.resource.data);
+      allow update: if isAdmin() && isValidService(request.resource.data);
       allow delete: if isAdmin();
     }
   }
