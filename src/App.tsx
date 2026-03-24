@@ -703,10 +703,16 @@ const ReviewsPage = () => {
             {t('reviews')}
             <span className="text-xs bg-white/5 px-2 py-1 rounded-lg text-gray-500">{allReviews.length}</span>
           </h3>
-          {auth.currentUser && !isWriting && (
+          {!isWriting && (
             <motion.button 
               whileTap={{ scale: 0.95 }}
-              onClick={() => setIsWriting(true)}
+              onClick={() => {
+                if (!auth.currentUser) {
+                  alert(t('loginToContinue'));
+                  return;
+                }
+                setIsWriting(true);
+              }}
               className="text-xs font-bold text-amber-500 uppercase tracking-widest"
             >
               {t('writeReview')}
@@ -825,6 +831,8 @@ const ProfilePage = ({ onLogout, isAdmin }: { onLogout: () => void; isAdmin: boo
       });
       
       await setDoc(doc(db, 'users', auth.currentUser.uid), {
+        uid: auth.currentUser.uid,
+        email: auth.currentUser.email,
         displayName: name,
         photoURL: avatar,
         updatedAt: serverTimestamp()
@@ -968,7 +976,13 @@ const ProfilePage = ({ onLogout, isAdmin }: { onLogout: () => void; isAdmin: boo
 
         {!isEditing && (
           <motion.button 
-            onClick={() => setIsEditing(true)}
+            onClick={() => {
+              if (!auth.currentUser) {
+                alert(t('loginToContinue'));
+                return;
+              }
+              setIsEditing(true);
+            }}
             whileTap={{ scale: 0.98 }}
             className="w-full glass rounded-2xl p-4 flex items-center justify-between hover:bg-white/5 transition-all neon-btn"
           >

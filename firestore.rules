@@ -54,6 +54,18 @@ service cloud.firestore {
              isValidEmail(data.email);
     }
 
+    function isValidUserUpdate(data) {
+      return data.keys().hasAny(['displayName', 'photoURL', 'updatedAt']) &&
+             (!('uid' in data) || data.uid == request.auth.uid);
+    }
+
+    function isValidReview(data) {
+      return data.keys().hasAll(['userId', 'user', 'rating', 'comment', 'date', 'createdAt']) &&
+             data.userId == request.auth.uid &&
+             data.rating is number && data.rating >= 1 && data.rating <= 5 &&
+             data.comment is string && data.comment.size() <= 1000;
+    }
+
     function isValidAppointment(data) {
       return data.keys().hasAll(['user_id', 'date', 'time', 'status']) &&
              data.user_id is string &&
@@ -77,7 +89,14 @@ service cloud.firestore {
     match /users/{uid} {
       allow read: if isOwner(uid) || isAdmin();
       allow create: if isOwner(uid) && isValidUser(request.resource.data);
-      allow update: if isOwner(uid) && isValidUser(request.resource.data);
+      allow update: if isOwner(uid) && (isValidUser(request.resource.data) || isValidUserUpdate(request.resource.data));
+    }
+
+    match /reviews/{reviewId} {
+      allow read: if true;
+      allow create: if isAuthenticated() && isValidReview(request.resource.data);
+      allow update: if isOwner(resource.data.userId) && isValidReview(request.resource.data);
+      allow delete: if isOwner(resource.data.userId) || isAdmin();
     }
 
     match /appointments/{appointmentId} {
