@@ -1,0 +1,41 @@
+{
+  "entities": {
+    "User": {
+      "title": "User Profile",
+      "description": "User profile information",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "Firebase Auth UID" },
+        "email": { "type": "string", "format": "email" },
+        "displayName": { "type": "string" },
+        "photoURL": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "email"]
+    },
+    "Appointment": {
+      "title": "Appointment",
+      "description": "A barber shop appointment",
+      "type": "object",
+      "properties": {
+        "user_id": { "type": "string", "description": "UID of the user who booked" },
+        "date": { "type": "string", "description": "Date of the appointment (YYYY-MM-DD)" },
+        "time": { "type": "string", "description": "Time slot (HH:mm:ss)" },
+        "service": { "type": "string", "description": "Type of service" },
+        "status": { "type": "string", "enum": ["confirmed", "pending", "cancelled"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["user_id", "date", "time", "status"]
+    }
+  },
+  "firestore": {
+    "/users/{uid}": {
+      "schema": "User",
+      "description": "User profiles"
+    },
+    "/appointments/{appointmentId}": {
+      "schema": "Appointment",
+      "description": "All appointments"
+    }
+  }
+}
