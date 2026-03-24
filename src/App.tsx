@@ -625,16 +625,12 @@ const ReviewsPage = () => {
 
   const handleSubmitReview = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!auth.currentUser) {
-      alert(t('loginToContinue'));
-      return;
-    }
     
     setLoading(true);
     try {
       await addDoc(collection(db, 'reviews'), {
-        userId: auth.currentUser.uid,
-        user: auth.currentUser.displayName || auth.currentUser.email?.split('@')[0] || t('guest'),
+        userId: auth.currentUser ? auth.currentUser.uid : 'guest',
+        user: auth.currentUser ? (auth.currentUser.displayName || auth.currentUser.email?.split('@')[0] || t('guest')) : t('guest'),
         rating,
         comment,
         date: t('today'),
@@ -645,6 +641,8 @@ const ReviewsPage = () => {
       setRating(5);
       alert(t('reviewSuccess'));
     } catch (error) {
+      alert(t('errorOccurred'));
+      setLoading(false);
       handleFirestoreError(error, OperationType.WRITE, 'reviews');
     }
     setLoading(false);
@@ -706,13 +704,7 @@ const ReviewsPage = () => {
           {!isWriting && (
             <motion.button 
               whileTap={{ scale: 0.95 }}
-              onClick={() => {
-                if (!auth.currentUser) {
-                  alert(t('loginToContinue'));
-                  return;
-                }
-                setIsWriting(true);
-              }}
+              onClick={() => setIsWriting(true)}
               className="text-xs font-bold text-amber-500 uppercase tracking-widest"
             >
               {t('writeReview')}
